@@ -913,12 +913,20 @@ class SiteTree extends DataObject implements PermissionProvider,i18nEntityProvid
 			$fromLive = $fromLive && strtolower((string)$this->getSourceQueryParam("Versioned.$param")) == $match;
 		}
 
-		if(!$fromLive
-			&& !Session::get('unsecuredDraftSite')
-			&& !Permission::checkMember($member, array('CMS_ACCESS_LeftAndMain', 'CMS_ACCESS_CMSMain', 'VIEW_DRAFT_CONTENT'))) {
-			// If we weren't definitely loaded from live, and we can't view non-live content, we need to
-			// check to make sure this version is the live version and so can be viewed
-			if (Versioned::get_versionnumber_by_stage($this->class, 'Live', $this->ID) != $this->Version) return false;
+		if (!$fromLive && !Session::get('unsecuredDraftSite')) {
+			if ($member) {
+				// If we weren't definitely loaded from live, and we can't view non-live content, we need to
+				// check to make sure this version is the live version and so can be viewed
+				if (!Permission::checkMember($member, array('CMS_ACCESS_LeftAndMain', 'CMS_ACCESS_CMSMain', 'VIEW_DRAFT_CONTENT'))
+				    && (Versioned::get_versionnumber_by_stage($this->class, 'Live', $this->ID) != $this->Version)
+				) {
+					return false;
+				}
+			} else {
+				// Anonymous browser should not view any secured draft content,
+				// even if the current page has no unpublished changes.
+				return false;
+			}
 		}
 		
 		// Orphaned pages (in the current stage) are unavailable, except for admins via the CMS
