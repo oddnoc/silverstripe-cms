@@ -102,8 +102,15 @@ class ContentControllerTest extends FunctionalTest {
 		// test when user does have permission, should show page title and header ok.
 		$this->logInWithPermission('ADMIN');
 		$this->assertEquals('200', $this->get('/contact/?stage=Stage')->getstatusCode());
-		
-		
+
+
+		// test when anonymous and no draft changes, should get login form via a 302 redirect
+		$home_page = $this->objFromFixture('ContentControllerTest_Page', 'root_page');
+		$home_page->doPublish();
+		$afr = $this->autoFollowRedirection;
+		$this->autoFollowRedirection = false;
+		$this->assertEquals('302', $this->get('/?stage=Stage')->getstatusCode());
+		$this->autoFollowRedirection = $afr;
 	}
 	
 	public function testLinkShortcodes() {
